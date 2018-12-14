@@ -1,0 +1,165 @@
+---
+title: "Practica1"
+author: "Natxo Vidal"
+date: "11 de diciembre de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+---
+## Cálculo de la nota probable de los alumnos que estan en las clases de matemáticas y portugués.
+
+---
+
+###Establecer y obtener directorio de trabajo
+
+```{r dirtrabajo, echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+currentDir <- getwd()
+setwd(currentDir)
+getwd()
+
+```
+
+
+###Comprobar y crear directorio
+
+```{r creardir, echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+if (!file.exists("datos")) {
+                 dir.create("datos")
+}
+```
+
+---
+###  Descargamos los datos 
+
+```{r descarga, echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+library(downloader)
+fileUrl <- "https://archive.ics.uci.edu/ml/machine-learning-databases/00320/student.zip"
+download(fileUrl, "/datos/student.zip", mode= "wb")
+unzip("/datos/student.zip", overwrite = TRUE, exdir="datos")
+list.files("datos")
+rm(fileUrl)
+
+```
+---
+### Leemos los dos ficheros csv mat y por y los guardamos en sus respectivos data frames.
+
+```{r readtables, echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=TRUE}
+
+library(knitr) # Para la generación de estas slides con R markdown
+setwd(currentDir)
+
+#student-mat.csv
+
+studentMat <- read.table("datos/student-mat.csv", 
+                         row.names=NULL, sep=";", header=TRUE)
+
+#Mostramos las primeras filas cargadas y las primeras 5 columnas
+
+kable(head(studentMat[,1:5]))
+
+#student-por.csv
+
+studentPor <- read.table("datos/student-por.csv", 
+                         row.names=NULL, sep=";", header=TRUE)
+
+#Mostramos las primeras filas cargadas y las primeras 5 columnas
+
+kable(head(studentPor[,1:5]))
+
+
+```
+
+---
+
+### Unimos los data frames solo los que tienen los mismos valores en las columnas especificadas  en ambos ficheros.
+
+```{r merge, echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+studentMatPor <- merge(studentMat,studentPor,
+                       by=c("school","sex","age",
+                            "address","famsize",
+                            "Pstatus","Medu",
+                            "Fedu","Mjob",
+                            "Fjob","reason",
+                            "nursery","internet"), 
+                       all=FALSE,
+                       suffixes=c("mat","por"))
+
+#Ordenamos las columnas por nombre
+
+dim(studentMatPor)[1]
+
+```
+---
+
+### Mostramos las primeras filas y columnas del data frame
+
+```{r order1plot,echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+
+library(gplots)
+textplot(kable(studentMatPor [1:10,1:9]), cex=1.1, fixed.width = TRUE, mar=c(0,0,0,0))
+
+```
+---
+
+### Seleccionamos las columnas del data frame que contienen notas
+
+```{r seleccionCol,echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+
+colnotasDf<-c("G1mat", "G1por", "G2mat", "G2por")
+
+#Creamos un nuevo data frame con solo las columnas de notas
+
+notasStudentMatPor<-studentMatPor[colnotasDf]
+
+
+kable(head(notasStudentMatPor))
+
+```
+
+---
+
+### Calculamos la nota media de cada uno
+
+```{r mediaNotas, echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+
+notasMedias<-apply(notasStudentMatPor,1, mean)
+head(notasMedias)
+
+```
+
+---
+### Divimos en aprobados y suspendidos segun la nota sea > 10 o < 10.
+
+```{r aprobados, echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+notasMedias<-as.data.frame(notasMedias,NULL)
+head(notasMedias > 10)
+
+```
+
+---
+
+### Generamos dos grafico donde se aprecia cuantos aprobados y suspendidos habrá.
+
+```{r graficas , echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE, fig.width=20, fig.height=10}
+
+plot(notasMedias)
+hist(notasMedias)
+
+```
+
+---
+
+```{r aprobados ,  echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+
+aprobados<-rowsum(notasMedias>10
+aprobados
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+

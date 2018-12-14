@@ -1,0 +1,227 @@
+---
+title: "Practica 2 Preparación de datos."
+author: "Natxo Vidal"
+date: "10 de diciembre de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r limpiar espacio , eval=FALSE, echo=FALSE,results='hide'}
+    ls()
+```
+
+ 
+```{r limpiarwd, eval=FALSE, echo=FALSE,results='hide'}
+    rm(list=ls())
+```
+---
+
+
+```{r comprobamos limpiarwd, eval=FALSE, echo=FALSE,results='hide'}
+    ls()
+```
+
+
+---
+
+## Establecer directorio de trabajo
+
+```{r establece Dir, echo=TRUE}
+currentDir<-getwd()
+setwd(currentDir)
+currentDir
+```
+
+## Cargamos librerias
+
+```{r carga librerias Dir, echo=TRUE}
+
+library(gplots)
+library(knitr)
+library(dplyr)
+```
+
+---
+## Comprobamos que se ha creado el directorio.
+
+
+```{r creamos dirtrabajo}
+
+currentDir <- getwd()
+setwd(currentDir)
+currentDir
+if (!file.exists("datos")) {
+      dir.create("datos")
+                           }
+
+```
+
+## Comprobamos que el fichero "DataToClean" está en el directorio "datos", y si no, detenemos el script
+
+
+```{r comprobarfichero, echo=TRUE, results='asis', message=FALSE, warning=FALSE, error=FALSE}
+
+currentDir
+setwd(currentDir)
+if (!file.exists("datos/DataToClean.csv")) {
+        stop(paste0("Se necesita que el fichero DataToClean esté en: ",currentDir, "/datos"))
+}
+```
+---
+
+##Leemos el fichero csv
+
+```{r leerFichero Example_dataToClean csv,  echo=TRUE,  message=FALSE, warning=FALSE, error=FALSE}
+
+con<-file("datos/DataToClean.csv","r")
+dataToClean<-read.csv(con)
+close(con)
+textplot(kable(head(dataToClean[1:5,1:3])),mar=c(0,0,0,0))
+
+```
+
+---
+
+## Correcion de nombres de columnas
+Vemos que los nombres de las columnas no son practicos.
+
+```{r corregimos nombres columnas, echo=TRUE, message=FALSE}
+
+names(dataToClean)
+colnames(dataToClean)[2] <- "Area"
+colnames(dataToClean)[3] <- "Street"
+colnames(dataToClean)[4] <- "StreetOk"
+colnames(dataToClean)[5] <- "StrangeHtml"
+names(dataToClean)
+```
+
+
+---
+
+## Clases de las columnas del data.frame "dataToClean":
+
+```{r classes, echo=TRUE, results='asis', message=FALSE}
+lapply(dataToClean, class)
+```
+
+
+---
+## Correcion de clases
+
+```{r corregimos classes, echo=TRUE,  message=FALSE, warning=FALSE, error=FALSE}
+
+
+dataToClean$Area        <- as.character(dataToClean$Area)
+dataToClean$StreetOk    <- as.character(dataToClean$StreetOk)
+lapply(dataToClean, class)
+textplot(kable(head(dataToClean[,1:3])),mar=c(0,0,0,0))
+```
+
+---
+## Elminamos la columna street y strangeHtml que no nos sirve
+La columna 3 y 4 son las mismas pero con caracteres raros. Y la 5 no aporta informacion
+
+```{r seleccionamos columnas, echo=TRUE, message=FALSE}
+
+dataToClean <- select(dataToClean, Year, Area, StreetOk)
+
+textplot(kable(head(dataToClean[,1:3])),mar=c(0,0,0,0))
+
+
+```
+
+
+---
+
+## Cambiamos a minusculas todas las filas de la columna street
+
+```{r minusculas nombres columnas, echo=TRUE, message=FALSE}
+
+dataToClean$StreetOk <- tolower(dataToClean$StreetOk)
+textplot(kable(head(dataToClean[,1:3])),mar=c(0,0,0,0))
+
+```
+
+---
+## Sustituimos las comas y otros caracteres por espacios 
+
+```{r sustituimos caraceres por espacios, echo=FALSE,  message=FALSE, results='hide'}
+
+gsub(",", "", dataToClean$StreetOk)
+gsub(".", " ", dataToClean$StreetOk) 
+gsub("'", "", dataToClean$StreetOk)
+gsub("  ", " ", dataToClean$StreetOk)
+```
+
+
+---
+
+## Elimina los espacios innecesarios de la columna "street"
+
+
+```{r strim, echo=TRUE,  message=FALSE, warning=FALSE, error=FALSE}
+library(stringr)
+
+cleanText <- str_trim(dataToClean$StreetOk)
+sum(nchar(dataToClean$StreetOk))
+
+# Comprobamos cuántos espacios hemos eliminado
+
+trimSpaces <- sum(nchar(dataToClean$StreetOk)) - sum(nchar(cleanText))
+trimSpaces
+dataToClean$StreetOk <- cleanText
+rm(cleanText)
+textplot(kable(head(dataToClean[,1:3])),mar=c(0,0,0,0))
+```
+
+---
+
+## Comprobamos si hay filas duplicadas y las eliminamos
+
+```{r quitar duplicados, echo=TRUE, message=FALSE}
+library(dplyr)
+dataToClean<-unique(dataToClean)
+dataToClean[1:20,1:3]
+
+```
+
+
+---
+
+## Summary
+
+Ejecutamos summary para ver algunas características de nuestro data.frame "dataToClean", columna a columna
+
+```{r summary, echo=TRUE,  message=FALSE, warning=FALSE, error=FALSE}
+summary(dataToClean)
+```
+
+
+
+---
+
+## 7. EXPORTAR DATOS PROCESADOS A CSV LOCAL
+
+
+
+Salvamos el data.frame "dataToClean", en un archivo CSV en un subdirectorio de nombre "output", que cuelga de "datos"
+
+```{r writetable, echo=TRUE, results='hide', message=TRUE, warning=TRUE, error=FALSE}
+setwd(currentDir)
+
+outputDir <- "datos/output"
+
+if (!file.exists(outputDir)) {
+                 dir.create(outputDir)
+                 }
+dim(dataToClean)
+
+write.table(dataToClean,file=paste(outputDir,"tidydata.csv", sep="/"),
+            sep=";",row.names=FALSE)
+
+```
